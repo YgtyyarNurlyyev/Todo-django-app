@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,1 initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/all.css"
+          integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk" crossorigin="anonymous">
+    <title>Tasks</title>
+</head>
+<body>
+{% if request.user.is_authenticated %}
+    <p>{{ request.user }}</p>
+    <a href="{% url 'logout' %}">Logout</a>
+{% else %}
+    <a href="{% url 'login' %}">Login</a>
+{% endif %}
+<hr>
+
+<button onclick="myFunction()" class="btn btn-warning" style="margin-bottom: 10px">Filter <i class="fas fa-filter"></i>
+</button>
+
+<div id="myDIV" style="display: none">
+    <form method="get" style="margin: 10px; width: 17.5%;">
+        <input type="text" class="form-control" name="NameFilter" value="{{ filter_val }}" placeholder="Tittle">
+        <label style="margin-top: 15px">At : </label>
+        <input type="time" name="startTime" step="2" value="{{ startTimer }}">
+        <label>Do : </label>
+        <input type="time" name="endTime" step="2" value="{{ endTimer }}">
+        <div class="form-group form-check">
+            <input type="checkbox" name="CheckFilter" class="form-check-input" id="exampleCheck1"
+                    {% if CheckFiltering == 'on' %} checked {% else %} {% endif %}>
+            <label class="form-check-label" for="exampleCheck1">Ýerine ýetirilmedikleri görkez</label>
+        </div>
+        <button type="submit" name="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+    {% if tasks %}
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th scope="col">Etmeli işler <a
+                href="?ordering=tittle&order={% if order == 'desc' %}asc{% else %}desc{% endif %}&NameFilter={{ filter_val }}&CheckFilter={{ CheckFiltering }}&startTime={{ startTimer }}&endTime={{ endTimer }}">
+            <i class="fas fa-sort"></i> </a></th>
+        <th>Wagty <a
+                href="?ordering=DoTime&order={% if order == 'desc' %}asc{% else %}desc{% endif %}&NameFilter={{ filter_val }}&CheckFilter={{ CheckFiltering }}&startTime={{ startTimer }}&endTime={{ endTimer }}">
+            <i class="fas fa-sort"></i> </a></th>
+        <th>Ýagday <a
+                href="?ordering=complete&order={% if order == 'desc' %}asc{% else %}desc{% endif %}&NameFilter={{ filter_val }}&CheckFilter={{ CheckFiltering }}&startTime={{ startTimer }}&endTime={{ endTimer }}"><i
+                class="fas fa-sort"></i> </a></th>
+        </td>
+        <td>Maglumat</td>
+
+        <td></td>
+        <td></td>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% for task in tasks %}
+        <tr>
+            <td scope="row">{{ task.tittle }}</td>
+            <td>{{ task.DoTime }}</td>
+            <td>{% if task.complete %}
+                <input class="checkbox" type="checkbox" onclick="myFunction2({{ task.id }})" checked>
+            {% else %}
+                <input class="checkbox" type="checkbox" onclick="myFunction2({{ task.id }})">
+            {% endif %}
+            </td>
+            <td><a href="{% url 'task' task.id %}"> Gör </a></td>
+
+            <td><a href="{% url 'task-update' task.id %}"> Üýtget </a></td>
+            <td onclick="return confirm('Pozmak isleyanizmi ?');">
+                <form method="POST" action="{% url 'task-delete' task.id %}">
+                    {% csrf_token %}
+                    <input value="POZ" type="submit">
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+        {% if is_paginated %}
+        <div class="pagination">
+            <span class="page-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&ordering={{ ordering }}&order={{ order }}&NameFilter={{ filter_val }}&CheckFilter={{ CheckFiltering }}&startTime={{ startTimer }}&endTime={{ endTimer }}">previous</a>
+                {% endif %}
+                <span class="page-current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&ordering={{ ordering }}&order={{ order }}&NameFilter={{ filter_val }}&CheckFilter={{ CheckFiltering }}&startTime={{ startTimer }}&endTime={{ endTimer }}">next</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+            ToDo Yok!
+        </div>
+{% endif %}
+
+
+
+<a href="{% url 'task-create' %}" style="margin-left: 10px;">
+    <button class="btn btn-outline-success">Täze goş</button>
+</a>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script>
+    function myFunction() {
+        var x = document.getElementById("myDIV");
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } else {
+            x.style.display = "none";
+        }
+
+    }
+
+
+    function myFunction2(id){
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", "{% url 'task-check' %}", true);
+            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify( {task:  id } ));
+    }
+
+
+</script>
+</body>
+</html>
